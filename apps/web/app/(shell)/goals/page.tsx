@@ -44,8 +44,8 @@ export default function GoalsPage() {
               <span className="sr-only">List view</span>
             </Button>
           </div>
-          <Button size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
+          <Button size="sm" className="h-10 gap-2">
+            <Plus className="h-6 w-4" />
             Add Goal
           </Button>
         </div>
@@ -74,16 +74,16 @@ function GoalCard({ goal }: { goal: Goal }) {
 
   return (
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-md">
-      <div className="h-42 bg-muted/30 w-full relative group overflow-hidden">
+      <div className="h-42 bg-muted/30 w-full relative group overflow-hidden rounded-t-4xl">
         {goal.imageUrl ? (
           <Image
             src={goal.imageUrl}
             alt={goal.name}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 group-hover:scale-105 rounded-t-4xl"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/10 group-hover:text-muted-foreground/20 transition-colors">
+          <div className="absolute border-2 border-red-inset-0 flex items-center justify-center text-muted-foreground/10 group-hover:text-muted-foreground/20 transition-colors rounded-xl">
             <Target className="h-16 w-16" />
           </div>
         )}
@@ -95,9 +95,9 @@ function GoalCard({ goal }: { goal: Goal }) {
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg leading-tight">{goal.name}</CardTitle>
-        {goal.deadline && (
-          <p className="text-xs text-muted-foreground">Target: {goal.deadline}</p>
-        )}
+        <p className="text-xs text-muted-foreground">
+          {goal.deadline ? `Target: ${goal.deadline}` : "No target/deadline"}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4 flex-1">
         <div className="space-y-1.5">

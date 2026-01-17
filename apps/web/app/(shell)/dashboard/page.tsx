@@ -7,7 +7,7 @@ import { Summary } from "@/components/Summary"
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8 min-w-0">
+    <div className="space-y-6 p-6 min-w-0">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-2">
@@ -15,25 +15,23 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <section className="min-w-0">
-        <h2 className="text-2xl font-semibold mb-4">Cash Flow Visualization</h2>
-        <div className="w-full overflow-x-auto">
-          <SankeyDiagram />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Left Column */}
+        <div className="md:col-span-2 space-y-6 min-w-0">
+          <SankeyDiagram height={500} className="w-full" />
+          <Subscriptions className="w-full" showFlaggedReview={false} />
         </div>
-      </section>
 
-      <section className="min-w-0">
-        <h2 className="text-2xl font-semibold mb-4">Subscriptions</h2>
-        <Subscriptions />
-      </section>
-      
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
-        <Goals onAction={() => console.log("Goal action clicked")} />
-        <Summary 
-          onClose={() => console.log("Close clicked")}
-          onViewDetails={() => console.log("View details clicked")}
-        />
-      </section>
+        {/* Right Column */}
+        <div className="md:col-span-1 flex flex-col gap-6 min-w-0">
+          <Summary 
+            className="shrink-0"
+            onClose={() => console.log("Close clicked")}
+            onViewDetails={() => console.log("View details clicked")}
+          />
+          <Goals className="flex-1" onAction={() => console.log("Goal action clicked")} />
+        </div>
+      </div>
     </div>
   )
 }

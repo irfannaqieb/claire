@@ -2,15 +2,20 @@
 
 import * as React from "react"
 import { useState } from "react"
+import Link from "next/link"
 import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card"
 import { Subscription } from "./types"
 import { mockSubscriptions } from "./mock-data"
@@ -21,7 +26,12 @@ import { MobileSubscriptionCard } from "./MobileSubscriptionCard"
 import { SubscriptionDetailsDialog } from "./SubscriptionDetailsDialog"
 import { FlaggedItemsReview } from "./FlaggedItemsReview"
 
-export function Subscriptions() {
+interface SubscriptionsProps {
+  showFlaggedReview?: boolean
+  className?: string
+}
+
+export function Subscriptions({ showFlaggedReview = true, className }: SubscriptionsProps) {
   const [subscriptions, setSubscriptions] = useState(mockSubscriptions)
   const [reviewedFlaggedIds, setReviewedFlaggedIds] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState(0)
@@ -54,6 +64,10 @@ export function Subscriptions() {
   const flaggedCount = flaggedSubscriptions.length
   const currentFlagged = unreviewedFlagged[0] // Show one at a time
   const reviewedCount = reviewedFlaggedIds.size
+  const potentialSavings = flaggedSubscriptions.reduce(
+    (sum, s) => sum + getMonthlyEquivalent(s.amount, s.frequency),
+    0
+  )
 
   // Handle flagged subscription action - mark as reviewed and move to next
   const handleFlaggedAction = (action: "subscription" | "not_subscription" | "dont_know", id: string) => {
@@ -80,165 +94,185 @@ export function Subscriptions() {
   // Action handler
   const handleAction = (action: string, id: string) => {
     console.log(`Action: ${action} on subscription: ${id}`)
-    // In a real app, this would update state/call API
     if (action === "copy_cancel") {
       // Toast notification would go here
     }
   }
 
   return (
-    <div className="space-y-6">
-      {/* A. Subscription Summary */}
-      <section className="space-y-4">
-        <p className="text-sm text-muted-foreground">Total spending</p>
-        <p className="text-5xl font-light tracking-tight">
-          <span className="text-2xl align-top font-bold">$</span>
-          <span className="font-bold">{totalMonthly.toFixed(2).split('.')[0]}</span>
-          <span className="text-2xl font-bold">.{totalMonthly.toFixed(2).split('.')[1]}</span>
-          <span className="text-xl text-muted-foreground font-normal">/m</span>
-        </p>
-        
-        <p className="text-base">
-          <span className="text-muted-foreground">You have </span>
-          <span className="font-semibold text-foreground">{subscriptions.length} subscriptions</span>
-          <span className="text-muted-foreground"> this month</span>
-          {flaggedCount > 0 && (
-            <>
-              <span className="text-muted-foreground"> and </span>
-              <span className="font-semibold text-amber-600">{flaggedCount}</span>
-              <span className="text-muted-foreground"> need review.</span>
-            </>
-          )}
-        </p>
-        
-        <p className="text-base">
-          <span className="text-muted-foreground">You will end the month with </span>
-          <span className="font-semibold text-emerald-600">{formatCurrency(totalYearly)}</span>
-        </p>
-      </section>
+    <Card className={cn("w-full border shadow-lg bg-background", className)}>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold">Subscriptions</CardTitle>
+      </CardHeader>
 
-      {/* B. Subscription List */}
-      <section>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-          <h2 className="text-lg font-semibold">All Subscriptions ({subscriptions.length})</h2>
-        </div>
+      <CardContent className="space-y-6">
+        {/* A. Subscription Summary */}
+        <section>
+          <p className="text-sm text-muted-foreground">Total spending</p>
+          <p className="text-5xl font-light tracking-tight">
+            <span className="text-2xl align-top font-bold">$</span>
+            <span className="font-bold">{totalMonthly.toFixed(2).split('.')[0]}</span>
+            <span className="text-2xl font-bold">.{totalMonthly.toFixed(2).split('.')[1]}</span>
+            <span className="text-xl text-muted-foreground font-normal">/m</span>
+          </p>
+          
+          <p className="text-base">
+            <span className="text-muted-foreground">You have </span>
+            <span className="font-semibold text-foreground">{subscriptions.length} subscriptions</span>
+            <span className="text-muted-foreground"> this month</span>
+            {flaggedCount > 0 && (
+              <>
+                <span className="text-muted-foreground"> and </span>
+                <span className="font-semibold text-amber-600">{flaggedCount}</span>
+                <span className="text-muted-foreground"> need review.</span>
+              </>
+            )}
+          </p>
+          
+          <p className="text-base">
+            <span className="text-muted-foreground">You will end the month with </span>
+            <span className="font-semibold text-emerald-600">{formatCurrency(totalYearly)}</span>
+          </p>
+        </section>
+
+        {/* B. Subscription List */}
+        <section>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <h2 className="text-lg font-semibold">All Subscriptions ({subscriptions.length})</h2>
+          </div>
 
         {/* Desktop Card View */}
-        <div className="hidden md:block">
-          <Card>
-            <CardContent className="space-y-3">
-              {subscriptions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <CreditCard className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-                  <p className="text-base font-medium text-muted-foreground">
-                    No subscriptions detected
-                  </p>
+        <div className="hidden md:block space-y-3">
+          {subscriptions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <CreditCard className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+              <p className="text-base font-medium text-muted-foreground">
+                No subscriptions detected
+              </p>
+            </div>
+          ) : (
+            paginatedSubscriptions.map((subscription) => (
+              <div
+                key={subscription.id}
+                className="py-4 px-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/20"
+                role="button"
+                tabIndex={0}
+                onClick={() => setDetailsDialog({ open: true, subscription })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    setDetailsDialog({ open: true, subscription })
+                  }
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <SubscriptionLogo
+                      name={subscription.name}
+                      logo={subscription.logo}
+                    />
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{subscription.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {subscription.category}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-medium">
+                      {formatCurrency(subscription.amount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {subscription.frequency}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <ActionMenu
+                      subscription={subscription}
+                      onAction={handleAction}
+                    />
+                  </div>
                 </div>
-              ) : (
-                paginatedSubscriptions.map((subscription) => (
-                  <Card
-                    key={subscription.id}
-                    className="py-4 shadow-none cursor-pointer transition-colors hover:bg-muted/20"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setDetailsDialog({ open: true, subscription })}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault()
-                        setDetailsDialog({ open: true, subscription })
-                      }
-                    }}
-                  >
-                    <CardContent className="px-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <SubscriptionLogo
-                            name={subscription.name}
-                            logo={subscription.logo}
-                          />
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{subscription.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {subscription.category}
-                            </p>
-                          </div>
-                        </div>
+              </div>
+            ))
+          )}
 
-                        <div className="text-right">
-                          <p className="font-medium">
-                            {formatCurrency(subscription.amount)}
-                          </p>
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {subscription.frequency}
-                          </p>
-                        </div>
+          {subscriptions.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-2">
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={currentPage === 0}
+                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {currentPage + 1} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={currentPage >= totalPages - 1}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
+                }
+                aria-label="Next page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
 
-                        <div className="flex items-center gap-1">
-                          <ActionMenu
-                            subscription={subscription}
-                            onAction={handleAction}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-
-              {subscriptions.length > 0 && totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4 pt-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    disabled={currentPage === 0}
-                    onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
+          {/* Flagged Subscriptions Section - One at a time */}
+          {subscriptions.length > 0 && showFlaggedReview && (
+            <FlaggedItemsReview
+              flaggedSubscriptions={flaggedSubscriptions}
+              currentFlagged={currentFlagged}
+              reviewedCount={reviewedCount}
+              flaggedCount={flaggedCount}
+              onAction={handleFlaggedAction}
+              isMobile={false}
+            />
+          )}
+          
+          {/* Potential Savings Message (Dashboard view) */}
+          {subscriptions.length > 0 && !showFlaggedReview && flaggedCount > 0 && (
+            <div className="border-t pt-6">
+              <div className="p-4 rounded-lg bg-linear-to-br from-emerald-50 to-teal-50 border border-emerald-100">
+                <p className="text-sm font-medium text-emerald-800 mb-1">
+                  Potential Savings
+                </p>
+                <p className="text-xs text-emerald-600 mb-3">
+                  Review flagged subscriptions to identify potential savings of up to{" "}
+                  <span className="font-semibold">
+                    {formatCurrency(potentialSavings)}
+                  </span>{" "}
+                  per month.
+                </p>
+                <Link href="/subscriptions">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    Review Flagged Subscriptions
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {currentPage + 1} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    disabled={currentPage >= totalPages - 1}
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages - 1, p + 1))
-                    }
-                    aria-label="Next page"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-
-            {/* Flagged Subscriptions Section - One at a time */}
-            {subscriptions.length > 0 && (
-              <FlaggedItemsReview
-                flaggedSubscriptions={flaggedSubscriptions}
-                currentFlagged={currentFlagged}
-                reviewedCount={reviewedCount}
-                flaggedCount={flaggedCount}
-                onAction={handleFlaggedAction}
-                isMobile={false}
-              />
-            )}
-          </Card>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mobile Card View */}
         <div className="md:hidden space-y-3">
           {subscriptions.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <CreditCard className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-                <p className="text-base font-medium text-muted-foreground">
-                  No subscriptions detected
-                </p>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <CreditCard className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+              <p className="text-base font-medium text-muted-foreground">
+                No subscriptions detected
+              </p>
+            </div>
           ) : (
             <>
               {paginatedSubscriptions.map((subscription) => (
@@ -279,22 +313,46 @@ export function Subscriptions() {
           )}
           
           {/* Flagged Subscriptions Section for Mobile - One at a time */}
-          {flaggedCount > 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <FlaggedItemsReview
-                  flaggedSubscriptions={flaggedSubscriptions}
-                  currentFlagged={currentFlagged}
-                  reviewedCount={reviewedCount}
-                  flaggedCount={flaggedCount}
-                  onAction={handleFlaggedAction}
-                  isMobile={true}
-                />
-              </CardContent>
-            </Card>
+          {flaggedCount > 0 && showFlaggedReview && (
+            <div className="pt-6">
+              <FlaggedItemsReview
+                flaggedSubscriptions={flaggedSubscriptions}
+                currentFlagged={currentFlagged}
+                reviewedCount={reviewedCount}
+                flaggedCount={flaggedCount}
+                onAction={handleFlaggedAction}
+                isMobile={true}
+              />
+            </div>
+          )}
+          
+          {/* Potential Savings Message for Mobile (Dashboard view) */}
+          {flaggedCount > 0 && !showFlaggedReview && (
+            <div className="pt-6">
+              <div className="p-4 rounded-lg bg-linear-to-br from-emerald-50 to-teal-50 border border-emerald-100">
+                <p className="text-sm font-medium text-emerald-800 mb-1">
+                  Potential Savings
+                </p>
+                <p className="text-xs text-emerald-600 mb-3">
+                  Review flagged subscriptions to identify potential savings of up to{" "}
+                  <span className="font-semibold">
+                    {formatCurrency(potentialSavings)}
+                  </span>{" "}
+                  per month.
+                </p>
+                <Link href="/subscriptions">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Review Flagged Subscriptions
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </section>
+
+      </CardContent>
 
       {/* Subscription Details Modal */}
       <SubscriptionDetailsDialog
@@ -305,6 +363,6 @@ export function Subscriptions() {
         }
         onAction={handleAction}
       />
-    </div>
+    </Card>
   )
 }

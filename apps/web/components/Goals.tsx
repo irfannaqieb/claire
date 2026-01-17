@@ -12,14 +12,16 @@ import { mockGoals, formatMYR, type Goal } from "@/lib/goals-data"
 export interface GoalsProps {
   onAction?: () => void
   goals?: Goal[]
+  className?: string
 }
 
-export function Goals({ onAction, goals: customGoals }: GoalsProps) {
-  const goals = customGoals || mockGoals.slice(0, 2)
+export function Goals({ onAction, goals: customGoals, className }: GoalsProps) {
+  // Use all mock goals instead of slicing, or use custom goals if provided
+  const goals = customGoals || mockGoals
   const hasGoals = goals.length > 0
 
   return (
-    <Card className="w-full border shadow-lg bg-background">
+    <Card className={cn("w-full border shadow-lg bg-background", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">

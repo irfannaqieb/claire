@@ -58,11 +58,12 @@ const iconMap: Record<string, React.ElementType> = {
 interface SummaryProps {
   onClose?: () => void
   onViewDetails?: () => void
+  className?: string
 }
 
-export function Summary({ onClose, onViewDetails }: SummaryProps) {
+export function Summary({ onClose, onViewDetails, className }: SummaryProps) {
   return (
-    <Card className="w-full border shadow-lg bg-background">
+    <Card className={cn("w-full border shadow-lg bg-background", className)}>
       {/* Header */}
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">

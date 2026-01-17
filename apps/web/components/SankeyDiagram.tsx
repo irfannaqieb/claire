@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowLeftRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Types for our data structure
 interface NodeData {
@@ -81,12 +82,14 @@ interface SankeyDiagramProps {
   data?: SankeyDataInput;
   width?: number;
   height?: number;
+  className?: string;
 }
 
 export function SankeyDiagram({
   data = SAMPLE_DATA,
   width: propWidth,
   height: propHeight = 500,
+  className,
 }: SankeyDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -104,40 +107,54 @@ export function SankeyDiagram({
   useEffect(() => {
     if (!containerRef.current) return;
     if (propWidth) {
-      setDimensions((prev) => ({ ...prev, width: propWidth }));
+      setDimensions({ width: propWidth, height: propHeight });
       return;
     }
 
-    const updateWidth = () => {
+    const updateDimensions = () => {
       if (containerRef.current) {
         const { width } = containerRef.current.getBoundingClientRect();
-        setDimensions((prev) => ({ ...prev, width: Math.max(width, 400) }));
+        // Allow scaling down to mobile widths
+        const newWidth = Math.max(width, 300);
+        
+        // Scale height on mobile to maintain aspect ratio
+        let newHeight = propHeight;
+        if (newWidth < 600) {
+          newHeight = Math.min(propHeight, 350);
+        }
+
+        setDimensions({ width: newWidth, height: newHeight });
       }
     };
 
     // Initial measurement
-    updateWidth();
+    updateDimensions();
 
     const resizeObserver = new ResizeObserver(() => {
-      updateWidth();
+      updateDimensions();
     });
 
     resizeObserver.observe(containerRef.current);
     return () => resizeObserver.disconnect();
-  }, [propWidth]);
+  }, [propWidth, propHeight]);
 
-  // Process data and create sankey layout
+  const isMobile = dimensions.width < 600;
+  const isSmallScreen = dimensions.width < 400;
+
   const { nodes, links } = (() => {
     const nodeMap = new Map(data.nodes.map((n, i) => [n.id, i]));
 
+    const marginLeft = isSmallScreen ? 10 : (isMobile ? 80 : 120);
+    const marginRight = isSmallScreen ? 10 : (isMobile ? 80 : 140);
+
     const sankeyGenerator = sankey<NodeData, LinkData>()
       .nodeId((d) => d.id)
-      .nodeWidth(20)
-      .nodePadding(32)
+      .nodeWidth(isSmallScreen ? 12 : 20)
+      .nodePadding(isSmallScreen ? 20 : 32)
       .nodeAlign(sankeyCenter)
       .extent([
-        [120, 20],
-        [dimensions.width - 140, dimensions.height - 20],
+        [marginLeft, 20],
+        [dimensions.width - marginRight, dimensions.height - 20],
       ]);
 
     const sankeyData = sankeyGenerator({
@@ -227,7 +244,7 @@ export function SankeyDiagram({
   const getLinkGradientId = (index: number) => `link-gradient-${index}`;
 
   return (
-    <Card className="w-full border shadow-lg bg-background">
+    <Card className={cn("w-full border shadow-lg bg-background", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
           <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
@@ -356,9 +373,9 @@ export function SankeyDiagram({
                     <text
                       x={
                         node.type === "source"
-                          ? (node.x0 || 0) - 8
+                          ? (node.x0 || 0) - (isSmallScreen ? 4 : 8)
                           : node.type === "sink"
-                          ? (node.x1 || 0) + 8
+                          ? (node.x1 || 0) + (isSmallScreen ? 4 : 8)
                           : ((node.x0 || 0) + (node.x1 || 0)) / 2
                       }
                       y={
@@ -372,33 +389,33 @@ export function SankeyDiagram({
                       }
                       className="pointer-events-none select-none fill-foreground text-sm font-medium"
                       style={{
-                        fontSize: "13px",
+                        fontSize: isSmallScreen ? "10px" : (isMobile ? "11px" : "13px"),
                         fontWeight: isHovered ? 600 : 500,
                       }}
                     >
-                      {node.label}
+                      {isSmallScreen && node.label.length > 12 ? `${node.label.substring(0, 10)}..` : node.label}
                     </text>
 
                     {/* Value label below node name */}
                     <text
                       x={
                         node.type === "source"
-                          ? (node.x0 || 0) - 8
+                          ? (node.x0 || 0) - (isSmallScreen ? 4 : 8)
                           : node.type === "sink"
-                          ? (node.x1 || 0) + 8
+                          ? (node.x1 || 0) + (isSmallScreen ? 4 : 8)
                           : ((node.x0 || 0) + (node.x1 || 0)) / 2
                       }
                       y={
                         node.type === "account"
                           ? (node.y1 || 0) + 32
-                          : (node.y0 || 0) + nodeHeight / 2 + 16
+                          : (node.y0 || 0) + nodeHeight / 2 + (isSmallScreen ? 12 : 16)
                       }
                       dy="0.35em"
                       textAnchor={
                         node.type === "source" ? "end" : node.type === "sink" ? "start" : "middle"
                       }
                       className="pointer-events-none select-none fill-muted-foreground text-xs"
-                      style={{ fontSize: "11px" }}
+                      style={{ fontSize: isSmallScreen ? "9px" : (isMobile ? "9px" : "11px") }}
                     >
                       {formatValue(getNodeTotal(node))}
                     </text>
