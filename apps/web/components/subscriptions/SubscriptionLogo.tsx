@@ -1,24 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 export function SubscriptionLogo({ name, logo }: { name: string; logo: string }) {
-  const [imgError, setImgError] = useState(false)
-
-  if (imgError) {
-    return (
-      <div className="w-10 h-10 rounded-lg bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-600 font-semibold text-sm border border-slate-200">
-        {name.charAt(0).toUpperCase()}
-      </div>
-    )
-  }
-
   return (
-    <img
-      src={logo}
-      alt={`${name} logo`}
-      className="w-10 h-10 rounded-lg object-cover border border-slate-200"
-      onError={() => setImgError(true)}
-    />
+    <Avatar className="w-10 h-10 border border-slate-200">
+      <AvatarImage
+        src={logo}
+        alt={`${name} logo`}
+        className="object-cover"
+      />
+      <AvatarFallback className="bg-linear-to-br from-slate-100 to-slate-200 text-slate-600 font-semibold text-sm">
+        {name.charAt(0).toUpperCase()}
+      </AvatarFallback>
+    </Avatar>
   )
 }
