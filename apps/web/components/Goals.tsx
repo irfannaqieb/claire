@@ -7,50 +7,15 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-
-type GoalStatus = "on-track" | "behind"
-
-type Goal = {
-  id: string
-  name: string
-  target: number
-  current: number
-  deadline: string | null
-  status: GoalStatus
-  nextAction: string
-}
-
-const mockGoals: Goal[] = [
-  {
-    id: "vacation",
-    name: "Japan trip",
-    target: 6_000,
-    current: 1_200,
-    deadline: "Dec 2026",
-    status: "behind",
-    nextAction: "Increase monthly contribution by MYR 300.",
-  },
-  {
-    id: "emergency",
-    name: "Emergency fund",
-    target: 15_000,
-    current: 8_500,
-    deadline: null,
-    status: "on-track",
-    nextAction: "Add MYR 500 to reach 60% milestone.",
-  },
-]
-
-function formatMYR(value: number) {
-  return `MYR ${value.toLocaleString("en-MY")}`
-}
+import { mockGoals, formatMYR, type Goal } from "@/lib/goals-data"
 
 export interface GoalsProps {
   onAction?: () => void
+  goals?: Goal[]
 }
 
-export function Goals({ onAction }: GoalsProps) {
-  const goals = mockGoals.slice(0, 2)
+export function Goals({ onAction, goals: customGoals }: GoalsProps) {
+  const goals = customGoals || mockGoals.slice(0, 2)
   const hasGoals = goals.length > 0
 
   return (

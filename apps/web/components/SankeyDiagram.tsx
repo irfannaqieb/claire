@@ -361,7 +361,11 @@ export function SankeyDiagram({
                           ? (node.x1 || 0) + 8
                           : ((node.x0 || 0) + (node.x1 || 0)) / 2
                       }
-                      y={(node.y0 || 0) + nodeHeight / 2}
+                      y={
+                        node.type === "account"
+                          ? (node.y1 || 0) + 16
+                          : (node.y0 || 0) + nodeHeight / 2
+                      }
                       dy="0.35em"
                       textAnchor={
                         node.type === "source" ? "end" : node.type === "sink" ? "start" : "middle"
@@ -384,7 +388,11 @@ export function SankeyDiagram({
                           ? (node.x1 || 0) + 8
                           : ((node.x0 || 0) + (node.x1 || 0)) / 2
                       }
-                      y={(node.y0 || 0) + nodeHeight / 2 + 16}
+                      y={
+                        node.type === "account"
+                          ? (node.y1 || 0) + 32
+                          : (node.y0 || 0) + nodeHeight / 2 + 16
+                      }
                       dy="0.35em"
                       textAnchor={
                         node.type === "source" ? "end" : node.type === "sink" ? "start" : "middle"
