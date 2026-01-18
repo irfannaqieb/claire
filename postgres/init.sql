@@ -82,6 +82,25 @@ CREATE TABLE IF NOT EXISTS user_goal (
 CREATE INDEX IF NOT EXISTS idx_goal_user_id ON user_goal(user_id);
 CREATE INDEX IF NOT EXISTS idx_goal_user_created_at ON user_goal(user_id, created_at);
 
+-- Financial insights table (AI-generated transaction analysis)
+CREATE TABLE IF NOT EXISTS financial_insight (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+    file_id TEXT REFERENCES user_upload(file_id) ON DELETE SET NULL,
+    insight_type TEXT NOT NULL CHECK(insight_type IN ('pattern', 'alert', 'recommendation')),
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    icon TEXT NOT NULL DEFAULT 'Lightbulb',
+    severity TEXT CHECK(severity IN ('info', 'warning', 'critical')),
+    metadata JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for financial insights
+CREATE INDEX IF NOT EXISTS idx_insight_user_id ON financial_insight(user_id);
+CREATE INDEX IF NOT EXISTS idx_insight_user_type ON financial_insight(user_id, insight_type);
+CREATE INDEX IF NOT EXISTS idx_insight_file_id ON financial_insight(file_id);
+
 -- Create indexes for frequently queried columns
 CREATE INDEX IF NOT EXISTS idx_user_email ON app_users(email);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_app_users_clerk_id ON app_users(clerk_id);

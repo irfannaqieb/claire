@@ -26,6 +26,7 @@ try:
     from backend.models.goal import Goal
     from backend.models.banking_transaction import BankingTransaction
     from backend.models.user_upload import UserUpload
+    from backend.models.financial_insight import FinancialInsight
 except ImportError:
     # If running as script, add parent directory to path
     import sys
@@ -41,6 +42,7 @@ except ImportError:
     from backend.models.goal import Goal
     from backend.models.banking_transaction import BankingTransaction
     from backend.models.user_upload import UserUpload
+    from backend.models.financial_insight import FinancialInsight
 
 
 class DatabaseService:
@@ -590,6 +592,121 @@ class DatabaseService:
         except Exception as e:
             # logger.error("database_health_check_failed", error=str(e))
             return False
+
+    # Financial Insight methods
+    def create_financial_insight(self, insight: FinancialInsight) -> FinancialInsight:
+        """Create a new financial insight.
+
+        Args:
+            insight: The financial insight to create
+
+        Returns:
+            FinancialInsight: The created financial insight
+        """
+        with Session(self.engine) as session:
+            session.add(insight)
+            session.commit()
+            session.refresh(insight)
+            return insight
+
+    def create_financial_insights_bulk(
+        self, insights: List[FinancialInsight]
+    ) -> List[FinancialInsight]:
+        """Create multiple financial insights in bulk.
+
+        Args:
+            insights: List of financial insights to create
+
+        Returns:
+            List[FinancialInsight]: List of created financial insights
+
+        Raises:
+            ValueError: If the list is empty
+        """
+        if not insights:
+            raise ValueError("Cannot create empty list of financial insights")
+
+        with Session(self.engine) as session:
+            session.add_all(insights)
+            session.commit()
+            for insight in insights:
+                session.refresh(insight)
+            return insights
+
+    def get_user_insights(
+        self,
+        user_id: int,
+        insight_type: Optional[str] = None,
+        file_id: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
+        order_by: str = "created_at",
+        order_desc: bool = True,
+    ) -> List[FinancialInsight]:
+        """Get financial insights for a user with optional filtering.
+
+        Args:
+            user_id: The user ID to filter by
+            insight_type: Optional filter by insight type (pattern, alert, recommendation)
+            file_id: Optional filter by file ID
+            limit: Maximum number of results to return
+            offset: Number of results to skip (for pagination)
+            order_by: Field to order by (default: 'created_at')
+            order_desc: If True, order descending; if False, order ascending
+
+        Returns:
+            List[FinancialInsight]: List of financial insights
+        """
+        with Session(self.engine) as session:
+            statement = select(FinancialInsight).where(FinancialInsight.user_id == user_id)
+
+            if insight_type is not None:
+                statement = statement.where(FinancialInsight.insight_type == insight_type)
+
+            if file_id is not None:
+                statement = statement.where(FinancialInsight.file_id == file_id)
+
+            order_field = getattr(FinancialInsight, order_by, FinancialInsight.created_at)
+            if order_desc:
+                statement = statement.order_by(order_field.desc())
+            else:
+                statement = statement.order_by(order_field.asc())
+
+            if offset > 0:
+                statement = statement.offset(offset)
+            if limit is not None:
+                statement = statement.limit(limit)
+
+            return session.exec(statement).all()
+
+    def delete_user_insights(
+        self,
+        user_id: int,
+        file_id: Optional[str] = None,
+    ) -> int:
+        """Delete financial insights for a user.
+
+        Args:
+            user_id: The user ID to delete insights for
+            file_id: Optional filter to only delete insights for a specific file
+
+        Returns:
+            int: Number of deleted insights
+        """
+        with Session(self.engine) as session:
+            statement = select(FinancialInsight).where(FinancialInsight.user_id == user_id)
+
+            if file_id is not None:
+                statement = statement.where(FinancialInsight.file_id == file_id)
+
+            insights = session.exec(statement).all()
+            count = len(insights)
+
+            for insight in insights:
+                session.delete(insight)
+
+            session.commit()
+            return count
 
 
 # Create a singleton instance

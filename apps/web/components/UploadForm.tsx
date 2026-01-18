@@ -104,7 +104,7 @@ export function UploadForm({ apiUrl, onSuccess }: UploadFormProps) {
         headers["Authorization"] = `Bearer ${token}`
       }
 
-      const response = await fetch(`${apiUrl}/upload`, {
+      const response = await fetch(`${apiUrl}/api/v1/file-uploads/upload`, {
         method: "POST",
         headers,
         body: formData,
@@ -124,7 +124,20 @@ export function UploadForm({ apiUrl, onSuccess }: UploadFormProps) {
   }
 
   return (
-    <Card className="w-full border shadow-lg bg-background">
+    <Card className="w-full border shadow-lg bg-background relative overflow-hidden">
+      {/* Loading Overlay */}
+      {uploading && (
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-primary/20 rounded-full" />
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-primary rounded-full animate-spin" />
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-sm font-medium">Uploading your file...</p>
+            <p className="text-xs text-muted-foreground">Please wait while we process your document</p>
+          </div>
+        </div>
+      )}
       <CardHeader>
         <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold">File Upload</CardTitle>

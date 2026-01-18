@@ -18,6 +18,7 @@ from backend.models.banking_transaction import BankingTransaction
 from backend.services.db.postgres_connector import database_service
 from backend.services.object_store.minio_connector import get_minio_connector
 from backend.services.document_parser.financial_text_extractor import extract_banking_transactions
+from backend.services.ai_agent.transaction_analyzer import transaction_analyzer
 
 router = APIRouter()
 minio_connector = get_minio_connector()
@@ -137,6 +138,17 @@ async def upload_file(
                     database_service.create_banking_transactions_bulk(banking_transactions)
                     transaction_count = len(banking_transactions)
                     
+                    # Trigger AI analysis after successful extraction
+                    try:
+                        transaction_analyzer.analyze(
+                            user_id=user_id,
+                            file_id=file_id,
+                            transactions=banking_transactions,
+                        )
+                    except Exception as analysis_error:
+                        # Log error but don't fail the upload
+                        print(f"Error running AI analysis: {str(analysis_error)}")
+                    
             except Exception as e:
                 # Log error but don't fail the upload
                 # In production, you might want to log this properly
@@ -149,6 +161,7 @@ async def upload_file(
             "file_url": upload_result.get("file_url", ""),
             "statement_type": statement_type,
             "transactions_extracted": transaction_count,
+            "insights_generated": transaction_count > 0,
             "message": "File uploaded and processed successfully"
         }
         
