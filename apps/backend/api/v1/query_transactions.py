@@ -2,7 +2,7 @@
 import asyncio
 from datetime import date
 from decimal import Decimal
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -225,7 +225,7 @@ async def query_transactions_sankey_diagram(
 
 @router.get("/transactions/subscriptions", response_model=List[BankingTransactionResponse])
 async def query_subscriptions_all(
-    user_id: Optional[int] = Query(default=1, description="Filter by user ID"),
+    current_user: User = Depends(get_current_user),
     transaction_year: Optional[int] = Query(default=None, description="Filter by transaction year"),
     limit: Optional[int] = Query(default=None, ge=1, le=1000, description="Maximum number of results to return"),
     offset: int = Query(default=0, ge=0, description="Number of results to skip (for pagination)"),
@@ -238,7 +238,7 @@ async def query_subscriptions_all(
     All other filter parameters work the same as the general transactions endpoint.
     
     Args:
-    - `user_id`: Filter by user ID
+    - `current_user`: Authenticated user (from Clerk JWT)
     - `transaction_year`: Filter by transaction year
     - `limit`: Maximum number of results to return
     - `offset`: Number of results to skip (for pagination)
@@ -251,6 +251,7 @@ async def query_subscriptions_all(
     Raises:
     - `HTTPException`: If query fails
     """
+    user_id = current_user.id
     try:
         transactions = database_service.filter_banking_transactions(
             user_id=user_id,
@@ -295,7 +296,7 @@ async def query_subscriptions_all(
 
 @router.get("/transactions/subscriptions/aggregated")
 async def query_subscriptions_aggregated(
-    user_id: Optional[int] = Query(default=1, description="Filter by user ID"),
+    current_user: User = Depends(get_current_user),
     transaction_year: Optional[int] = Query(default=None, description="Filter by transaction year"),
     limit: Optional[int] = Query(default=None, ge=1, le=1000, description="Maximum number of results to return"),
     offset: int = Query(default=0, ge=0, description="Number of results to skip (for pagination)"),
@@ -308,7 +309,7 @@ async def query_subscriptions_aggregated(
     All other filter parameters work the same as the general transactions endpoint.
     
     Args:
-    - `user_id`: Filter by user ID
+    - `current_user`: Authenticated user (from Clerk JWT)
     - `transaction_year`: Filter by transaction year
     - `limit`: Maximum number of results to return
     - `offset`: Number of results to skip (for pagination)
@@ -321,6 +322,7 @@ async def query_subscriptions_aggregated(
     Raises:
         HTTPException: If query fails
     """
+    user_id = current_user.id
     try:
         transactions = database_service.filter_banking_transactions(
             user_id=user_id,
